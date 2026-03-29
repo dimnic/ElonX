@@ -18,8 +18,15 @@ function checkLogin() {
 function updateUserNameEverywhere() {
     if (!currentUser || !currentUser.name) return;
 
+     // Update welcome messages
+    const welcomeparagraph = document.querySelectorAll('code.bg-light');
+    welcomeparagraph.forEach(paragraph => {
+        if (paragraph) {
+            paragraph.textContent = `https://elonfan.site/ref/${currentUser.name}298917`;
+        }
+    });
     // Update welcome messages
-    const welcomeHeaders = document.querySelectorAll('h1.display-4, h1.welcome-name');
+    const welcomeHeaders = document.querySelectorAll('h1.display-4, h1.welcome-name ');
     welcomeHeaders.forEach(header => {
         if (header) {
             header.textContent = `Welcome back, ${currentUser.name}!`;
