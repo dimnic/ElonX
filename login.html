@@ -20,7 +20,12 @@
         <div class="container">
             <div class="auth-form" data-aos="fade-up">
                 <h2 class="text-center mb-4">Login to Your Account</h2>
+                
                 <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="name" placeholder="Enter your name (e.g. Suzzy)" required>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Email Address</label>
                         <input type="email" class="form-control" id="email" placeholder="you@example.com" required>
@@ -31,6 +36,7 @@
                     </div>
                     <button type="submit" class="btn btn-dark w-100 py-3">Login</button>
                 </form>
+
                 <p class="text-center mt-4">
                     Don't have an account? <a href="signup.html">Sign Up</a>
                 </p>
@@ -44,34 +50,31 @@
     <script>
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
+            const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
-            
-            if (!email) {
-                alert("Please enter your email");
+
+            if (!name) {
+                alert("Please enter your name");
+                return;
+            }
+            if (!email || !email.includes('@')) {
+                alert("Please enter a valid email address");
                 return;
             }
 
-            // Get the saved user from localStorage (if they signed up before)
-            let savedUser = localStorage.getItem('elonUser');
-            let user;
-
-            if (savedUser) {
-                user = JSON.parse(savedUser);
-                // Update email if different
-                user.email = email;
-            } else {
-                // First time login - create user with email as name fallback
-                user = {
-                    name: email.split('@')[0],   // Use part before @ as name
-                    email: email,
-                    invested: 500,
-                    joined: "March 2026"
-                };
-            }
+            // Create or update user
+            const user = {
+                name: name,
+                email: email,
+                invested: 24850,
+                joined: "March 2026",
+                lastLogin: new Date().toISOString()
+            };
 
             localStorage.setItem('elonUser', JSON.stringify(user));
-            alert(`Login successful! Welcome back, ${user.name}`);
+            
+            alert(`✅ Login successful!\nWelcome back, ${name}!`);
             window.location.href = "dashboard.html";
         });
     </script>
