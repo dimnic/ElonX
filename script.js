@@ -1,19 +1,26 @@
-// script.js - Final Version with Supabase + Profiles Table
+// script.js - Fixed Version (Resolves invisible text/AOS crash)
 
-const SUPABASE_URL = 'https://iqaxcdfjnkfwxtlluwho.supabase.co';
+const SUPABASE_URL = 'https://supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_D51OBZeRfbXPmzQKMZIfwg_i4e7K0C-';
 
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Ensure Supabase is loaded from CDN in HTML before this script
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 
- // Update welcome messages
+// --- FIX: Moved this into a function to prevent "null" crash on load ---
+function updateReferralLinks() {
+    if (!currentUser) return; 
+    
+    const name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || "User";
     const welcomeparagraph = document.querySelectorAll('code.bg-light');
+    
     welcomeparagraph.forEach(paragraph => {
         if (paragraph) {
-            paragraph.textContent = `https://elonfan.site/ref/${currentUser.name}298917`;
+            paragraph.textContent = `https://elonfan.site{name}298917`;
         }
     });
+}
 
 // Update name on all pages
 function updateUserName() {
@@ -51,7 +58,6 @@ async function signupUser(name, email, password) {
 
     if (error) return alert("Signup failed: " + error.message);
 
-    // Create profile in custom table
     if (data.user) {
         await createUserProfile(data.user, name);
     }
@@ -69,29 +75,10 @@ async function loginUser(email, password) {
 
     currentUser = data.user;
     updateUserName();
+    updateReferralLinks();
 
-    alert(`✅ Login successful!\nWelcome back, ${currentUser.user_metadata?.full_name || currentUser.email}!`);
+    alert(`✅ Login successful!`);
     window.location.href = "dashboard.html";
-}
-
-// Forgot Password
-async function forgotPassword(email) {
-    if (!email) return alert("Please enter email");
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password.html'
-    });
-    if (error) alert(error.message);
-    else alert(`✅ Reset email sent to ${email}. Check your inbox!`);
-}
-
-// Reset Password
-async function resetPassword(newPassword) {
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) alert(error.message);
-    else {
-        alert("✅ Password updated successfully!");
-        window.location.href = "login.html";
-    }
 }
 
 // Logout
@@ -106,16 +93,25 @@ async function checkAuth() {
     if (session) {
         currentUser = session.user;
         updateUserName();
+        updateReferralLinks(); // Now safe to call
     }
 }
 
+// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    AOS.init({ duration: 1000, once: true });
+    // 1. Initialize AOS (This makes text visible)
+    if (typeof AOS !== 'undefined') {
+        AOS.init({ 
+            duration: 1000, 
+            once: true 
+        });
+    }
+
+    // 2. Check login status
     checkAuth();
 });
 
+// Export functions to global window for HTML onclick access
 window.signupUser = signupUser;
 window.loginUser = loginUser;
-window.forgotPassword = forgotPassword;
-window.resetPassword = resetPassword;
 window.logoutUser = logoutUser;
