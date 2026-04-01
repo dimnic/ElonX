@@ -1,18 +1,16 @@
-// script.js - Fixed Version (Resolves invisible text/AOS crash)
-
+// script.js - Final Stable Version
 const SUPABASE_URL = 'https://supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_D51OBZeRfbXPmzQKMZIfwg_i4e7K0C-';
 
-// Ensure Supabase is loaded from CDN in HTML before this script
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// FIX: Use capital 'S' for the library call to avoid the ReferenceError
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 
-// --- FIX: Moved this into a function to prevent "null" crash on load ---
+// Function to update referral links only if they exist on the current page
 function updateReferralLinks() {
     if (!currentUser) return; 
-    
-    const name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || "User";
+    const name = currentUser.user_metadata?.full_name || "User";
     const welcomeparagraph = document.querySelectorAll('code.bg-light');
     
     welcomeparagraph.forEach(paragraph => {
@@ -22,96 +20,66 @@ function updateReferralLinks() {
     });
 }
 
-// Update name on all pages
+// Function to update name displays only if they exist on the current page
 function updateUserName() {
     if (!currentUser) return;
     const name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || "User";
     document.querySelectorAll('h1.display-4, h1.welcome-name, .welcome-name').forEach(el => {
-        el.textContent = `Welcome back, ${name}!`;
+        if (el) el.textContent = `Welcome back, ${name}!`;
     });
 }
 
-// Create or update user profile in custom table
-async function createUserProfile(user, name) {
-    const { error } = await supabase
-        .from('profiles')
-        .upsert({
-            id: user.id,
-            full_name: name,
-            email: user.email,
-            invested: 500,
-            updated_at: new Date().toISOString()
-        });
-
-    if (error) console.error("Profile creation error:", error);
-}
-
-// Signup
+// Auth Functions
 async function signupUser(name, email, password) {
     if (!name || !email || !password) return alert("Please fill all fields");
-
     const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: { data: { full_name: name } }
+        email, password, options: { data: { full_name: name } }
     });
-
-    if (error) return alert("Signup failed: " + error.message);
-
-    if (data.user) {
-        await createUserProfile(data.user, name);
-    }
-
-    alert(`✅ Account created!\nPlease check your email (${email}) to confirm.`);
+    if (error) return alert(error.message);
+    alert("✅ Check your email to confirm!");
 }
 
-// Login
 async function loginUser(email, password) {
-    if (!email || !password) return alert("Please fill email and password");
-
+    if (!email || !password) return alert("Please fill all fields");
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) return alert("Login failed: " + error.message);
-
-    currentUser = data.user;
-    updateUserName();
-    updateReferralLinks();
-
-    alert(`✅ Login successful!`);
+    if (error) return alert(error.message);
     window.location.href = "dashboard.html";
 }
 
-// Logout
 async function logoutUser() {
     await supabase.auth.signOut();
     window.location.href = "index.html";
 }
 
-// Check auth + load profile
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
         currentUser = session.user;
         updateUserName();
-        updateReferralLinks(); // Now safe to call
+        updateReferralLinks();
     }
 }
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Initialize AOS (This makes text visible)
+    // 1. Safe AOS Initialization (This fixes the "Invisible" text)
     if (typeof AOS !== 'undefined') {
-        AOS.init({ 
-            duration: 1000, 
-            once: true 
-        });
+        AOS.init({ duration: 1000, once: true });
+    } else {
+        console.warn("AOS library not found. Check your HTML script tags.");
     }
 
     // 2. Check login status
     checkAuth();
+
+    // 3. FIX: Check if buttons exist before adding listeners to prevent "onclick of null" error
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.onclick = () => { /* your login logic here if not using inline onclick */ };
+    }
 });
 
-// Export functions to global window for HTML onclick access
+// Export to window for HTML access
 window.signupUser = signupUser;
 window.loginUser = loginUser;
 window.logoutUser = logoutUser;
