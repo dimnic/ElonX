@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-light">
 
@@ -22,17 +23,19 @@
                 <h2 class="text-center mb-4">Login</h2>
                 <form id="loginForm">
                     <div class="mb-3">
-                        <label class="form-label">Your Name</label>
-                        <input type="text" class="form-control" id="name" placeholder="Suzzy" required>
+                        <label class="form-label">Your Name (optional)</label>
+                        <input type="text" class="form-control" id="name" placeholder="Suzzy">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" placeholder="you@example.com" required>
+                        <input type="email" class="form-control" id="email" required>
                     </div>
-                    
                     <div class="mb-3">
                         <label class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+                        <input type="password" class="form-control" id="password" required>
+                    </div>
+                    <div class="mb-3 text-end">
+                        <a href="#" onclick="showForgotPassword()" class="text-muted small">Forgot Password?</a>
                     </div>
                     <button type="submit" class="btn btn-dark w-100 py-3">Login</button>
                 </form>
@@ -43,16 +46,20 @@
         </div>
     </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
     <script src="script.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
-            loginUser(name, email);
+            const password = document.getElementById('password').value;
+            loginUser(email, password);
         });
+
+        function showForgotPassword() {
+            const email = prompt("Enter your registered email to reset password:");
+            if (email) forgotPassword(email);
+        }
     </script>
 </body>
 </html>

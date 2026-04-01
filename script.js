@@ -1,19 +1,13 @@
-// script.js - Final Fixed Version
+// script.js - Supabase Integration (Your Project)
+
+const SUPABASE_URL = 'https://iqaxcdfjnkfwxtlluwho.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_D51OBZeRfbXPmzQKMZIfwg_i4e7K0C-';
+
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 
-function loadUser() {
-    const saved = localStorage.getItem('elonUser');
-    if (saved) {
-        currentUser = JSON.parse(saved);
-        return true;
-    }
-    return false;
-}
-
-function updateUserName() {
-    if (!currentUser || !currentUser.name) return;
-     // Update welcome messages
+ // Update welcome messages
     const welcomeparagraph = document.querySelectorAll('code.bg-light');
     welcomeparagraph.forEach(paragraph => {
         if (paragraph) {
@@ -21,69 +15,121 @@ function updateUserName() {
         }
     });
 
-    // Update dashboard and other pages
+// Update welcome name on dashboard and other pages
+function updateUserName() {
+    if (!currentUser) return;
+    
+    const displayName = currentUser.user_metadata?.full_name || 
+                       currentUser.email?.split('@')[0] || 
+                       "User";
+
     document.querySelectorAll('h1.display-4, h1.welcome-name, .welcome-name').forEach(el => {
-        el.textContent = `Welcome back, ${currentUser.name}!`;
+        el.textContent = `Welcome back, ${displayName}!`;
     });
 }
 
-function loginUser(name, email) {
-    if (!name || name.trim() === "") {
-        alert("Please enter your name");
+// Signup
+async function signupUser(name, email, password) {
+    if (!name || !email || !password) {
+        alert("Please fill all fields");
         return;
     }
-    if (!email || !email.includes("@")) {
+
+    const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: { full_name: name }
+        }
+    });
+
+    if (error) {
+        alert("Signup failed: " + error.message);
+        return;
+    }
+
+    alert(`✅ Account created successfully!\nPlease check your email (${email}) to confirm your account.`);
+}
+
+// Login
+async function loginUser(email, password) {
+    if (!email || !password) {
+        alert("Please fill email and password");
+        return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        alert("Login failed: " + error.message);
+        return;
+    }
+
+    currentUser = data.user;
+    updateUserName();
+
+    alert(`✅ Login successful!\nWelcome back, ${currentUser.user_metadata?.full_name || currentUser.email}!`);
+    window.location.href = "dashboard.html";
+}
+
+// Forgot Password
+async function forgotPassword(email) {
+    if (!email || !email.includes('@')) {
         alert("Please enter a valid email");
         return;
     }
 
-    const user = {
-        name: name.trim(),
-        email: email.trim(),
-        invested: 24850,
-        joined: "March 2026"
-    };
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password.html'
+    });
 
-    localStorage.setItem('elonUser', JSON.stringify(user));
-    currentUser = user;
-
-    alert(`✅ Login successful!\nWelcome back, ${user.name}!`);
-    window.location.href = "dashboard.html";
+    if (error) {
+        alert("Error sending reset email: " + error.message);
+    } else {
+        alert(`✅ Password reset email sent to ${email}\nPlease check your inbox (and spam folder).`);
+    }
 }
 
-function signupUser(name, email) {
-    if (!name || name.trim() === "") {
-        alert("Please enter your name");
-        return;
+// Reset Password (used in reset-password.html)
+async function resetPassword(newPassword) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+        alert("Reset failed: " + error.message);
+    } else {
+        alert("✅ Your password has been updated successfully!");
+        window.location.href = "login.html";
     }
-    if (!email || !email.includes("@")) {
-        alert("Please enter a valid email");
-        return;
-    }
-
-    const user = {
-        name: name.trim(),
-        email: email.trim(),
-        invested: 500,
-        joined: "March 2026"
-    };
-
-    localStorage.setItem('elonUser', JSON.stringify(user));
-    currentUser = user;
-
-    alert(`🎉 Account created successfully!\nWelcome, ${user.name}!`);
-    window.location.href = "dashboard.html";
 }
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    AOS.init({ duration: 1000, once: true });
+// Logout
+async function logoutUser() {
+    await supabase.auth.signOut();
+    alert("You have been logged out.");
+    window.location.href = "index.html";
+}
 
-    if (loadUser()) {
+// Check if user is logged in
+async function checkAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        currentUser = session.user;
         updateUserName();
     }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    AOS.init({ duration: 1000, once: true });
+    checkAuth();
 });
 
-// Make functions available to HTML forms
-window.loginUser = loginUser;
+// Make functions available globally
 window.signupUser = signupUser;
+window.loginUser = loginUser;
+window.forgotPassword = forgotPassword;
+window.resetPassword = resetPassword;
+window.logoutUser = logoutUser;
