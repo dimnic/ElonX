@@ -1,4 +1,4 @@
-// script.js - Simple LocalStorage + Google Sheets Logging
+// script.js - Final Version with Google Sheets Logging
 
 let currentUser = null;
 
@@ -12,7 +12,7 @@ function loadUser() {
     return false;
 }
 
-// Update welcome name
+// Update welcome name on dashboard and other pages
 function updateUserName() {
     if (!currentUser || !currentUser.name) return;
 
@@ -22,10 +22,15 @@ function updateUserName() {
 }
 
 // ==================== GOOGLE SHEETS LOGGING ====================
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbziNqD_b08nP73CZbimGFvqaeuIONXVp0T-X7gr4fa2c929yGRkXkEqYGDpvSx9dQb9BQ/exec";  
-// ←←← PASTE YOUR ACTUAL WEB APP URL HERE
+// PASTE YOUR ACTUAL WEB APP URL BELOW
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbziNqD_b08nP73CZbimGFvqaeuIONXVp0T-X7gr4fa2c929yGRkXkEqYGDpvSx9dQb9BQ/exec";
 
 async function logToGoogleSheets(action, name, email) {
+    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbziNqD_b08nP73CZbimGFvqaeuIONXVp0T-X7gr4fa2c929yGRkXkEqYGDpvSx9dQb9BQ/exec")) {
+        console.log("⚠️ Google Sheets URL not set yet");
+        return;
+    }
+
     try {
         const payload = {
             action: action,
@@ -33,15 +38,17 @@ async function logToGoogleSheets(action, name, email) {
             email: email
         };
 
-        await fetch(GOOGLE_SCRIPT_URL, {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             body: JSON.stringify(payload),
             headers: { "Content-Type": "application/json" }
         });
 
-        console.log(`✅ ${action} logged to Google Sheets`);
+        if (response.ok) {
+            console.log(`✅ ${action} successfully logged to Google Sheets`);
+        }
     } catch (err) {
-        console.log("Could not log to Google Sheets (but site still works):", err);
+        console.log("Could not log to Google Sheets:", err);
     }
 }
 
@@ -111,7 +118,7 @@ function logoutUser() {
     }
 }
 
-// Initialize
+// Initialize on every page
 document.addEventListener('DOMContentLoaded', function() {
     AOS.init({ duration: 1000, once: true });
 
@@ -120,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Make functions available to HTML
+// Make functions available to HTML forms
 window.loginUser = loginUser;
 window.signupUser = signupUser;
 window.logoutUser = logoutUser;
