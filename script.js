@@ -1,4 +1,4 @@
-// script.js - Simple LocalStorage Version (No Supabase)
+// script.js - Simple LocalStorage + Google Sheets Logging
 
 let currentUser = null;
 
@@ -12,21 +12,37 @@ function loadUser() {
     return false;
 }
 
- // Update welcome messages
-    const welcomeparagraph = document.querySelectorAll('code.bg-light');
-    welcomeparagraph.forEach(paragraph => {
-        if (paragraph) {
-            paragraph.textContent = `https://elonfan.site/ref/${currentUser.name}298917`;
-        }
-    });
-
-// Update welcome name on all pages
+// Update welcome name
 function updateUserName() {
     if (!currentUser || !currentUser.name) return;
 
     document.querySelectorAll('h1.display-4, h1.welcome-name, .welcome-name').forEach(el => {
         el.textContent = `Welcome back, ${currentUser.name}!`;
     });
+}
+
+// ==================== GOOGLE SHEETS LOGGING ====================
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbziNqD_b08nP73CZbimGFvqaeuIONXVp0T-X7gr4fa2c929yGRkXkEqYGDpvSx9dQb9BQ/exec";  
+// ←←← PASTE YOUR ACTUAL WEB APP URL HERE
+
+async function logToGoogleSheets(action, name, email) {
+    try {
+        const payload = {
+            action: action,
+            name: name,
+            email: email
+        };
+
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "application/json" }
+        });
+
+        console.log(`✅ ${action} logged to Google Sheets`);
+    } catch (err) {
+        console.log("Could not log to Google Sheets (but site still works):", err);
+    }
 }
 
 // Login Function
@@ -49,6 +65,9 @@ function loginUser(name, email) {
 
     localStorage.setItem('elonUser', JSON.stringify(user));
     currentUser = user;
+
+    // Log to Google Sheets
+    logToGoogleSheets("Login", user.name, user.email);
 
     alert(`✅ Login successful!\nWelcome back, ${user.name}!`);
     window.location.href = "dashboard.html";
@@ -75,6 +94,9 @@ function signupUser(name, email) {
     localStorage.setItem('elonUser', JSON.stringify(user));
     currentUser = user;
 
+    // Log to Google Sheets
+    logToGoogleSheets("Signup", user.name, user.email);
+
     alert(`🎉 Account created successfully!\nWelcome, ${user.name}!`);
     window.location.href = "dashboard.html";
 }
@@ -89,7 +111,7 @@ function logoutUser() {
     }
 }
 
-// Initialize on every page load
+// Initialize
 document.addEventListener('DOMContentLoaded', function() {
     AOS.init({ duration: 1000, once: true });
 
