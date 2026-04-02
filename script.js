@@ -1,86 +1,104 @@
-// script.js - Final Stable Version
-const SUPABASE_URL = 'https://supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_D51OBZeRfbXPmzQKMZIfwg_i4e7K0C-';
-
-// FIX: Use capital 'S' for the library call to avoid the ReferenceError
-// Change this line in your script.js
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// script.js - Simple LocalStorage Version (No Supabase)
 
 let currentUser = null;
 
-// Function to update referral links only if they exist on the current page
-function updateReferralLinks() {
-    if (!currentUser) return; 
-    const name = currentUser.user_metadata?.full_name || "User";
+// Load user from localStorage
+function loadUser() {
+    const savedUser = localStorage.getItem('elonUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        return true;
+    }
+    return false;
+}
+
+ // Update welcome messages
     const welcomeparagraph = document.querySelectorAll('code.bg-light');
-    
     welcomeparagraph.forEach(paragraph => {
         if (paragraph) {
-            paragraph.textContent = `https://elonfan.site{name}298917`;
+            paragraph.textContent = `https://elonfan.site/ref/${currentUser.name}298917`;
         }
     });
-}
 
-// Function to update name displays only if they exist on the current page
+// Update welcome name on all pages
 function updateUserName() {
-    if (!currentUser) return;
-    const name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || "User";
+    if (!currentUser || !currentUser.name) return;
+
     document.querySelectorAll('h1.display-4, h1.welcome-name, .welcome-name').forEach(el => {
-        if (el) el.textContent = `Welcome back, ${name}!`;
+        el.textContent = `Welcome back, ${currentUser.name}!`;
     });
 }
 
-// Auth Functions
-async function signupUser(name, email, password) {
-    if (!name || !email || !password) return alert("Please fill all fields");
-    const { data, error } = await supabase.auth.signUp({
-        email, password, options: { data: { full_name: name } }
-    });
-    if (error) return alert(error.message);
-    alert("✅ Check your email to confirm!");
-}
+// Login Function
+function loginUser(name, email) {
+    if (!name || name.trim() === "") {
+        alert("Please enter your name");
+        return;
+    }
+    if (!email || !email.includes("@")) {
+        alert("Please enter a valid email address");
+        return;
+    }
 
-async function loginUser(email, password) {
-    if (!email || !password) return alert("Please fill all fields");
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return alert(error.message);
+    const user = {
+        name: name.trim(),
+        email: email.trim(),
+        invested: 24850,
+        joined: "March 2026"
+    };
+
+    localStorage.setItem('elonUser', JSON.stringify(user));
+    currentUser = user;
+
+    alert(`✅ Login successful!\nWelcome back, ${user.name}!`);
     window.location.href = "dashboard.html";
 }
 
-async function logoutUser() {
-    await supabase.auth.signOut();
-    window.location.href = "index.html";
+// Signup Function
+function signupUser(name, email) {
+    if (!name || name.trim() === "") {
+        alert("Please enter your name");
+        return;
+    }
+    if (!email || !email.includes("@")) {
+        alert("Please enter a valid email address");
+        return;
+    }
+
+    const user = {
+        name: name.trim(),
+        email: email.trim(),
+        invested: 500,
+        joined: "March 2026"
+    };
+
+    localStorage.setItem('elonUser', JSON.stringify(user));
+    currentUser = user;
+
+    alert(`🎉 Account created successfully!\nWelcome, ${user.name}!`);
+    window.location.href = "dashboard.html";
 }
 
-async function checkAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-        currentUser = session.user;
+// Logout
+function logoutUser() {
+    if (confirm("Are you sure you want to logout?")) {
+        localStorage.removeItem('elonUser');
+        currentUser = null;
+        alert("You have been logged out.");
+        window.location.href = "index.html";
+    }
+}
+
+// Initialize on every page load
+document.addEventListener('DOMContentLoaded', function() {
+    AOS.init({ duration: 1000, once: true });
+
+    if (loadUser()) {
         updateUserName();
-        updateReferralLinks();
-    }
-}
-
-// --- INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Safe AOS Initialization (This fixes the "Invisible" text)
-    if (typeof AOS !== 'undefined') {
-        AOS.init({ duration: 1000, once: true });
-    } else {
-        console.warn("AOS library not found. Check your HTML script tags.");
-    }
-
-    // 2. Check login status
-    checkAuth();
-
-    // 3. FIX: Check if buttons exist before adding listeners to prevent "onclick of null" error
-    const loginBtn = document.getElementById('login-btn');
-    if (loginBtn) {
-        loginBtn.onclick = () => { /* your login logic here if not using inline onclick */ };
     }
 });
 
-// Export to window for HTML access
-window.signupUser = signupUser;
+// Make functions available to HTML
 window.loginUser = loginUser;
+window.signupUser = signupUser;
 window.logoutUser = logoutUser;
