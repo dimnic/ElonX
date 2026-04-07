@@ -1,4 +1,4 @@
-// script.js - Real Supabase Authentication
+// script.js - Clean Supabase Version (Fixed)
 
 const SUPABASE_URL = 'https://iqaxcdfjnkfwxtlluwho.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_D51OBZeRfbXPmzQKMZIfwg_i4e7K0C-';
@@ -16,7 +16,7 @@ function updateUserName() {
     });
 }
 
-// Signup with Email Confirmation
+// Signup
 async function signupUser(name, email, password) {
     if (!name || !email || !password) {
         alert("Please fill all fields");
@@ -37,7 +37,7 @@ async function signupUser(name, email, password) {
         return;
     }
 
-    alert(`✅ Account created!\n\nA confirmation email has been sent to ${email}.\nPlease check your inbox and click the verification link.`);
+    alert(`✅ Account created!\n\nA confirmation email has been sent to ${email}.\nPlease check your inbox and click the link to verify.`);
 }
 
 // Login
@@ -73,7 +73,7 @@ async function forgotPassword(email) {
     });
 
     if (error) alert("Error: " + error.message);
-    else alert(`✅ Password reset email sent to ${email}.\nCheck your inbox!`);
+    else alert(`✅ Password reset email sent to ${email}. Check your inbox!`);
 }
 
 // Logout
@@ -82,7 +82,7 @@ async function logoutUser() {
     window.location.href = "index.html";
 }
 
-// Check if user is logged in
+// Check auth status
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
 });
 
+// Make functions available globally
 window.signupUser = signupUser;
 window.loginUser = loginUser;
 window.forgotPassword = forgotPassword;
